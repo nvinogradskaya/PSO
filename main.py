@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
 def plot_function():
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-
+    # Построение функции в трехмерном пространстве
     x = np.linspace(-2, 3, 100)
     y = np.linspace(-2, 3, 100)
     X, Y = np.meshgrid(x, y)
@@ -21,34 +21,38 @@ def plot_function():
     ax.view_init(elev=10, azim=105)
     ax.dist = 7
     plt.show()
-# Define the objective function
+# Определение целевой функции
 def function(x, y):
     return (x - 2) ** 4 + (x - 2 * y) ** 2
 
-# Define the Particle class
+
 class Particle:
     def __init__(self, x_range, y_range):
+        # Инициализация частицы
         self.position = [random.uniform(*x_range), random.uniform(*y_range)]
         self.velocity = [random.uniform(*x_range) / 10, random.uniform(*y_range) / 10]
         self.best_position = self.position.copy()
 
     def update_position(self):
+        # Обновление позиции частицы
         self.position[0] += self.velocity[0]
         self.position[1] += self.velocity[1]
 
     def update_velocity(self, global_best_position, inertia_weight, cognitive_weight, social_weight):
+        # Обновление скорости частицы
         r1 = random.random()
         r2 = random.random()
-
         self.velocity[0] = inertia_weight * self.velocity[0] + cognitive_weight * r1 * (self.best_position[0] - self.position[0]) + social_weight * r2 * (global_best_position[0] - self.position[0])
         self.velocity[1] = inertia_weight * self.velocity[1] + cognitive_weight * r1 * (self.best_position[1] - self.position[1]) + social_weight * r2 * (global_best_position[1] - self.position[1])
 
     def evaluate(self):
+        # Вычисление значения целевой функции для частицы
         return function(self.position[0], self.position[1])
 
-# Define the PSO class
+
 class PSO:
     def __init__(self, x_range, y_range, num_particles, num_iterations, inertia_weight, cognitive_weight, social_weight):
+        # Инициализация PSO
         self.x_range = x_range
         self.y_range = y_range
         self.num_particles = num_particles
@@ -60,32 +64,27 @@ class PSO:
         self.global_best_position = []
 
     def initialize_particles(self):
+        # Инициализация частиц
         self.particles = [Particle(self.x_range, self.y_range) for _ in range(self.num_particles)]
         self.global_best_position = self.particles[0].position.copy()
 
     def run(self):
+        # Запуск алгоритма PSO
         iteration_history = []
         for _ in range(self.num_iterations):
             iteration_data = []
             for particle in self.particles:
                 fitness = particle.evaluate()
-
                 if fitness < function(particle.best_position[0], particle.best_position[1]):
                     particle.best_position = particle.position.copy()
-
                 if fitness < function(self.global_best_position[0], self.global_best_position[1]):
                     self.global_best_position = particle.position.copy()
-
                 particle.update_velocity(self.global_best_position, self.inertia_weight, self.cognitive_weight, self.social_weight)
                 particle.update_position()
-
                 iteration_data.append((particle.position[0], particle.position[1], fitness))
-
             iteration_history.append(iteration_data)
-
         return iteration_history, self.global_best_position, function(self.global_best_position[0], self.global_best_position[1])
 
-# Define the main window class
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -149,6 +148,7 @@ class MainWindow(QMainWindow):
         self.layout.addLayout(self.input_layout)
 
     def create_table_widget(self):
+        # Создание таблицы для отображения данных итераций
         self.table_widget = QTableWidget()
         self.table_widget.setColumnCount(3)
         self.table_widget.setHorizontalHeaderLabels(["Частица х1", "Частица х2", "Значение f"])
@@ -158,10 +158,12 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.table_widget, 2)
 
     def create_result_label(self):
+        # Создание поля для отображения результата
         self.result_label = QLabel()
         self.layout.addWidget(self.result_label, 2)
 
     def create_buttons(self):
+        # Создание кнопок
         self.buttons_layout = QVBoxLayout()
 
         self.start_button = QPushButton("Старт")
@@ -176,6 +178,7 @@ class MainWindow(QMainWindow):
         self.layout.addLayout(self.buttons_layout)
 
     def run_algorithm(self):
+        # Запуск алгоритма PSO с заданными параметрами
         num_particles = int(self.num_particles_input.text())
         num_iterations = int(self.num_iterations_input.text())
         inertia_weight = float(self.inertia_weight_input.text())
@@ -198,6 +201,7 @@ class MainWindow(QMainWindow):
         self.show_result()
 
     def populate_table(self, iteration_data):
+        # Заполнение таблицы данными итерации
         self.table_widget.clearContents()
         self.table_widget.setRowCount(len(iteration_data))
 
@@ -223,10 +227,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     plot_function()
-    # Create the application
     app = QApplication(sys.argv)
-    # Create the main window
     window = MainWindow()
     window.show()
-    # Execute the application
     sys.exit(app.exec())
